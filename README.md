@@ -7,6 +7,7 @@ Quick Start
 -----------
 
 ```
+$ brew install bahamas10/tap/prefset
 $ prefset init
 $ vim ~/.config/prefset/config.toml
 ...

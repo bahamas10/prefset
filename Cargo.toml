@@ -3,6 +3,9 @@ name = "prefset"
 version = "0.1.0"
 edition = "2024"
 description = "Synchronize macOS preferences with one config file"
+homepage = "https://github.com/bahamas10/prefset"
+repository = "https://github.com/bahamas10/prefset"
+license = "MIT"
 
 [dependencies]
 anyhow = "1.0"
