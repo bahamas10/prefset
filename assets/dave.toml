@@ -1,0 +1,146 @@
+# Dave's macOS preferences.
+#
+# These were taken from my dotfiles here:
+# https://github.com/bahamas10/dotfiles/blob/master/install
+#
+# Shoutouts to the GOAT for showing me this was possible over 10 years ago (this
+# was written in 2026):
+#
+# https://github.com/mathiasbynens/dotfiles/blob/master/.macos
+#
+# - Dave Eddy, @yousuckatprogramming
+
+[defaults.NSGlobalDomain]
+# Keyboard
+NSAutomaticSpellingCorrectionEnabled = false
+NSAutomaticCapitalizationEnabled = false
+InitialKeyRepeat = 15
+KeyRepeat = 2
+ApplePressAndHoldEnabled = false
+AppleKeyboardUIMode = 3
+
+# Finder and application behavior
+AppleShowAllExtensions = true
+AppleMiniaturizeOnDoubleClick = true
+NSNavPanelExpandedStateForSaveMode = true
+NSNavPanelExpandedStateForSaveMode2 = true
+PMPrintingExpandedStateForPrint = true
+PMPrintingExpandedStateForPrint2 = true
+NSDocumentSaveNewDocumentsToCloud = false
+NSAutomaticQuoteSubstitutionEnabled = false
+NSAutomaticDashSubstitutionEnabled = false
+
+# Trackpad: enable tap to click.
+"com.apple.mouse.tapBehavior" = 1
+
+[defaults."com.apple.driver.AppleBluetoothMultitouch.trackpad"]
+# enable tap to click - i'm not positive why i have this in 2 different settings
+# tbh
+Clicking = 1
+
+# bottom right corner is right-click because my first laptop was windows and
+# habits are hard to break
+TrackpadCornerSecondaryClick = 2
+TrackpadRightClick = true
+
+# three finger drag is a must
+TrackpadThreeFingerDrag = true
+
+[defaults."com.apple.AppleMultitouchTrackpad"]
+# this is seriously set per-device type... wild
+Clicking = 1
+
+# make the haptics firm
+FirstClickThreshold = 2
+SecondClickThreshold = 2
+
+# three finger drag is a must
+TrackpadThreeFingerDrag = true
+
+[defaults."com.apple.universalaccess"]
+# ctrl + scroll to zoom and follow keyboard focus while zoomed.
+closeViewScrollWheelToggle = true
+HIDScrollZoomModifierMask = 262144
+closeViewZoomFollowsFocus = true
+
+[defaults."com.apple.print.PrintingPrefs"]
+# dave has to check if this still does anything lol
+"Quit When Finished" = true
+
+[defaults."com.apple.finder"]
+# full path in finder windows
+_FXShowPosixPathInTitle = true
+
+# always show the status bar
+ShowStatusBar = true
+
+# i like seeing everything mounted on my desktop
+ShowExternalHardDrivesOnDesktop = true
+ShowMountedServersOnDesktop = true
+ShowRemovableMediaOnDesktop = true
+
+# ALWAYS open a new window in my home dir
+NewWindowTarget = "PfHm"
+
+# spotlight search should always start in my current folder
+FXDefaultSearchScope = "SCcf"
+
+# i commented this out for all of YOU using this because we don't have $HOME
+# resolution here.  perhaps certain domain/keys should be specially processed?
+# NewWindowTargetPath = "file:///Users/your-name"
+
+[defaults."com.apple.dock"]
+# most recently used spaces was a mistake
+mru-spaces = false
+
+# dock should be out of sight and out of mind (and to the left)
+autohide = true
+orientation = "left"
+show-recents = false
+
+# Hot-corner values:
+# 0: no-op; 2: Mission Control; 3: application windows; 4: Desktop;
+# 5: start screen saver; 6: disable screen saver; 10: sleep display;
+# 11: Launchpad; 12: Notification Center.
+
+# Top-left and top-right: Mission Control.
+wvous-tl-corner = 2
+wvous-tl-modifier = 0
+wvous-tr-corner = 2
+wvous-tr-modifier = 0
+
+# Bottom-right: start the screen saver.
+wvous-br-corner = 5
+wvous-br-modifier = 0
+
+# Bottom-left: show the Desktop.
+wvous-bl-corner = 4
+wvous-bl-modifier = 0
+
+[defaults."com.apple.screencapture"]
+# i like my screenshots to be full of metadata
+include-date = true
+
+[defaults."com.apple.Preview"]
+# autosave actually burns me sometimes so just turn it off
+ApplePersistence = false
+
+[defaults."com.apple.Terminal"]
+# i just always want plain text
+CopyAttributesProfile = "com.apple.Terminal.no-attributes"
+
+# i don't use the default terminal app - but when i do i'm a pro
+"Startup Window Settings" = "Pro"
+"Default Window Settings" = "Pro"
+
+# new tabs use the default profile and current working directory just like
+# finder
+NewTabSettingsBehavior = 1
+NewTabWorkingDirectoryBehavior = 1
+
+[defaults."com.googlecode.iTerm2"]
+# do not automatically enter copy mode when selecting text.
+EnterCopyModeAutomatically = false
+
+# todo for dave: i have a super customized iterm2 setup i should probably
+# migrate over here eventually.

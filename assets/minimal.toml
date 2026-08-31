@@ -1,0 +1,22 @@
+# prefset configuration
+#
+# Preferences live under the `defaults` namespace. Each nested table is a
+# macOS preferences domain. Values may be booleans, integers, floats, or strings.
+
+[defaults.NSGlobalDomain]
+
+# disable spell correction
+NSAutomaticSpellingCorrectionEnabled = false
+
+# speed up keyboard repeat rate
+KeyRepeat = 2
+
+[defaults."com.apple.dock"]
+orientation = "left"
+autohide = true
+
+[defaults."com.apple.finder"]
+ShowStatusBar = true
+
+# Want to see more? Remove this file and run `prefset init --full` for a more
+# comprehensive example configuration.

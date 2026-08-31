@@ -1,0 +1,218 @@
+# Comprehensive prefset configuration
+#
+# Preferences live under the `defaults` namespace. Each nested table is a
+# macOS preferences domain.
+
+[defaults.NSGlobalDomain]
+# Disable automatic spelling corrections and sentence capitalization.
+# NSAutomaticSpellingCorrectionEnabled = false
+# NSAutomaticCapitalizationEnabled = false
+
+# Control the delay before a held key repeats and the repeat rate thereafter.
+# Lower numbers are faster - these values are deliberately faster than default.
+# InitialKeyRepeat = 15
+# KeyRepeat = 2
+
+# Repeat held letter keys instead of showing the accented-character picker.
+# ApplePressAndHoldEnabled = false
+
+# Give Tab and Shift-Tab keyboard focus to all controls, not just text fields
+# and lists. A value of 3 enables the additional controls.
+# AppleKeyboardUIMode = 3
+
+# Finder and application behavior
+# Always display filename extensions in Finder and file dialogs.
+# AppleShowAllExtensions = true
+
+# Minimize a window when its title bar is double-clicked.
+# AppleMiniaturizeOnDoubleClick = true
+
+# Show expanded Save and Print dialogs by default. The keys ending in 2 cover
+# newer versions of the corresponding system dialogs.
+# NSNavPanelExpandedStateForSaveMode = true
+# NSNavPanelExpandedStateForSaveMode2 = true
+# PMPrintingExpandedStateForPrint = true
+# PMPrintingExpandedStateForPrint2 = true
+
+# Save new documents locally by default rather than in iCloud.
+# NSDocumentSaveNewDocumentsToCloud = false
+
+# Disable smart punctuation: curly quotes, em/en dashes, and a period inserted
+# by typing two spaces.
+# NSAutomaticQuoteSubstitutionEnabled = false
+# NSAutomaticDashSubstitutionEnabled = false
+# NSAutomaticPeriodSubstitutionEnabled = false
+
+# Disable inline text-completion suggestions while typing.
+# NSAutomaticTextCompletionEnabled = false
+
+# Show scroll bars all the time, when scrolling, or automatically based on the
+# input device. Other accepted values are "WhenScrolling" and "Automatic".
+# AppleShowScrollBars = "Always"
+
+# Trackpad: enable tap to click.
+# Host-specific variants are intentionally omitted.
+# "com.apple.mouse.tapBehavior" = 1
+
+[defaults."com.apple.driver.AppleBluetoothMultitouch.trackpad"]
+# Enable tap to click.
+# Clicking = 1
+
+# Map the bottom-right corner to secondary click.
+# TrackpadCornerSecondaryClick = 2
+# TrackpadRightClick = true
+
+# Enable three-finger drag.
+# TrackpadThreeFingerDrag = true
+
+[defaults."com.apple.AppleMultitouchTrackpad"]
+# Enable tap to click.
+# Clicking = 1
+
+# Haptic firm press.
+# FirstClickThreshold = 2
+# SecondClickThreshold = 2
+
+# Enable three-finger drag.
+# TrackpadThreeFingerDrag = true
+
+[defaults."com.apple.universalaccess"]
+# Use Ctrl + scroll to zoom and follow keyboard focus while zoomed.
+# closeViewScrollWheelToggle = true
+# 262144 is the modifier-mask value for the Control key.
+# HIDScrollZoomModifierMask = 262144
+# closeViewZoomFollowsFocus = true
+
+[defaults."com.apple.print.PrintingPrefs"]
+# Automatically quit the printer app when jobs complete.
+# "Quit When Finished" = true
+
+[defaults."com.apple.finder"]
+# Show hidden files. Finder must be restarted for this to take effect.
+# AppleShowAllFiles = true
+
+# Show the full POSIX path in Finder window titles.
+# _FXShowPosixPathInTitle = true
+
+# Show the path bar and status bar.
+# ShowPathbar = true
+# ShowStatusBar = true
+
+# Allow changing a filename extension without a warning dialog.
+# FXEnableExtensionChangeWarning = false
+
+# Use list view by default. Other common values are "icnv" (icons), "clmv"
+# (columns), and "glyv" (gallery).
+# FXPreferredViewStyle = "Nlsv"
+
+# Add Quit Finder to Finder's application menu.
+# QuitMenuItem = true
+
+# Show drives, servers, and removable media on the desktop.
+# ShowHardDrivesOnDesktop = true
+# ShowExternalHardDrivesOnDesktop = true
+# ShowMountedServersOnDesktop = true
+# ShowRemovableMediaOnDesktop = true
+
+# Set to false to hide all desktop icons while leaving the files in place.
+# CreateDesktop = true
+
+# Open new Finder windows at the home directory.
+# NewWindowTarget = "PfHm"
+
+# Only search the current directory.
+# FXDefaultSearchScope = "SCcf"
+
+# NewWindowTargetPath is omitted because prefset does not implicitly expand
+# $HOME. Add a literal URL for your account if desired, for example:
+# NewWindowTargetPath = "file:///Users/your-name"
+
+[defaults."com.apple.dock"]
+# Keep Spaces in their chosen order instead of rearranging them by recent use.
+# mru-spaces = false
+
+# Group Mission Control windows by application.
+# expose-group-apps = true
+
+# Dock behavior
+# autohide = true
+# orientation = "left"
+# show-recents = false
+
+# Size Dock icons and optionally magnify them on hover.
+# tilesize = 48.0
+# magnification = false
+# largesize = 64.0
+
+# Minimize windows with the scale effect and place them in their app icon.
+# The other standard minimize effect is "genie".
+# mineffect = "scale"
+# minimize-to-application = true
+
+# Disable the icon bounce when launching applications.
+# launchanim = false
+
+# Make automatic hiding appear immediately and animate more quickly.
+# autohide-delay = 0.0
+# autohide-time-modifier = 0.2
+
+# Make the icons of hidden applications translucent.
+# showhidden = true
+
+# Hot-corner values:
+# 0: no-op; 2: Mission Control; 3: application windows; 4: Desktop;
+# 5: start screen saver; 6: disable screen saver; 10: sleep display;
+# 11: Launchpad; 12: Notification Center.
+
+# Top-left and top-right: Mission Control.
+# wvous-tl-corner = 2
+# wvous-tl-modifier = 0
+# wvous-tr-corner = 2
+# wvous-tr-modifier = 0
+
+# Bottom-right: start the screen saver.
+# wvous-br-corner = 5
+# wvous-br-modifier = 0
+
+# Bottom-left: show the Desktop.
+# wvous-bl-corner = 4
+# wvous-bl-modifier = 0
+
+[defaults."com.apple.screencapture"]
+# Include the date in screenshot filenames.
+# include-date = true
+
+# Save screenshots as PNG. Other common formats include "jpg", "pdf", and
+# "tiff".
+# type = "png"
+
+# Remove window shadows and disable the floating thumbnail after capture.
+# disable-shadow = true
+# show-thumbnail = false
+
+# Screenshot location is omitted because prefset does not implicitly expand
+# $HOME. Add a literal path for your account if desired, for example:
+# location = "/Users/your-name/Desktop"
+
+[defaults."com.apple.TextEdit"]
+# Create plain-text documents by default and use UTF-8 when opening and saving
+# plain-text files. NSString's UTF-8 encoding value is 4.
+# RichText = false
+# PlainTextEncoding = 4
+# PlainTextEncodingForWrite = 4
+
+[defaults."com.apple.Preview"]
+# Disable autosave.
+# ApplePersistence = false
+
+[defaults."com.apple.Terminal"]
+# Do not copy formatting attributes.
+# CopyAttributesProfile = "com.apple.Terminal.no-attributes"
+
+# Use the Pro profile.
+# "Startup Window Settings" = "Pro"
+# "Default Window Settings" = "Pro"
+
+# New tabs use the default profile and current working directory.
+# NewTabSettingsBehavior = 1
+# NewTabWorkingDirectoryBehavior = 1
