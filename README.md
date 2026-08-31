@@ -14,8 +14,34 @@ $ prefset apply --dry-run
 $ prefset apply
 ```
 
-Example
--------
+Example Config
+--------------
+
+The single config is super simple and written in toml:
+
+```toml
+[defaults.NSGlobalDomain]
+
+# disable spell correction
+NSAutomaticSpellingCorrectionEnabled = false
+
+# speed up keyboard repeat rate
+KeyRepeat = 2
+
+[defaults."com.apple.dock"]
+orientation = "left"
+autohide = true
+
+[defaults."com.apple.finder"]
+ShowStatusBar = true
+
+# ... and more ...
+```
+
+Check the [assets/](/assets) directory for more config examples.
+
+Example Run
+-----------
 
 When you first run the program it will detect if the config file is found, and
 prompt you to create it if not:
