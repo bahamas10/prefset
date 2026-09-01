@@ -10,6 +10,20 @@ license = "MIT"
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4.6.6", features = ["derive"] }
+enum_dispatch = "0.3.13"
 indoc = "2.0.7"
 plist = "1.10"
 toml = { version = "1.1", features = ["preserve_order"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.2"
+objc2-app-kit = {
+	version = "0.3.2",
+	default-features = false,
+	features = ["std", "NSScreen", "NSWorkspace"]
+}
+objc2-foundation = {
+	version = "0.3.2",
+	default-features = false,
+	features = ["std", "NSArray", "NSDictionary", "NSError", "NSObject", "NSString", "NSURL"]
+}
