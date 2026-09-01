@@ -10,7 +10,6 @@ use crate::{State, args, util};
 
 pub mod apply;
 pub mod check;
-pub mod export;
 pub mod init;
 
 /// `prefset` called with no arguments

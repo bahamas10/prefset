@@ -135,7 +135,6 @@ Commands:
   init    Create a starter config file
   check   Exit successfully if all configured preferences are set
   apply   Apply configured preferences
-  export  Print an equivalent standalone shell script
   help    Print this message or the help of the given subcommand(s)
 
 Options:

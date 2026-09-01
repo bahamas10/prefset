@@ -47,7 +47,6 @@ fn main() -> Result<()> {
         None => commands::run(&state),
         Some(Command::Apply(cmd)) => commands::apply::run(&state, &cmd),
         Some(Command::Check(cmd)) => commands::check::run(&state, &cmd),
-        Some(Command::Export(cmd)) => commands::export::run(&state, &cmd),
         Some(Command::Init(cmd)) => commands::init::run(&state, &cmd),
     }
 }

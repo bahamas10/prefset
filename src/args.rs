@@ -59,9 +59,6 @@ pub enum Command {
 
     /// Apply configured preferences
     Apply(ApplyCommand),
-
-    /// Print an equivalent standalone shell script
-    Export(ExportCommand),
 }
 
 #[derive(Debug, Default, Parser)]
@@ -104,9 +101,6 @@ pub struct ApplyCommand {
     #[arg(long, group = "relaunch-policy")]
     pub no_relaunch: bool,
 }
-
-#[derive(Debug, Default, Parser)]
-pub struct ExportCommand {}
 
 pub fn parse() -> Cli {
     Cli::parse()
