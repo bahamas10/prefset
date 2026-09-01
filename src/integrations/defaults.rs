@@ -10,10 +10,18 @@ use std::process::Command;
 use anyhow::{Context, Result, bail};
 use plist::Dictionary;
 
-use crate::config::{Config, Preference};
+use super::{DisplayValue, IntegrationChange};
 use crate::util::shell;
 
 pub const DEFAULTS_CMD: &str = "/usr/bin/defaults";
+
+/// One configured key in a macOS defaults domain.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Setting {
+    pub domain: String,
+    pub key: String,
+    pub value: Value,
+}
 
 /**
  * This is a bit confusing, but this program makes use of 3 `Value` enums:
@@ -82,18 +90,29 @@ impl fmt::Display for Value {
     }
 }
 
+impl From<&Value> for DisplayValue {
+    fn from(value: &Value) -> Self {
+        match value {
+            Value::Boolean(value) => Self::Boolean(*value),
+            Value::Integer(value) => Self::Integer(*value),
+            Value::Float(value) => Self::Float(*value),
+            Value::String(value) => Self::String(value.clone()),
+        }
+    }
+}
+
 /// A single change to make to the system
 #[derive(Clone, Debug)]
 pub struct Change {
-    pub preference: Preference,
-    pub current: Option<Value>,
+    setting: Setting,
+    current: Option<Value>,
 }
 
 impl fmt::Display for Change {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let domain = &self.preference.domain;
-        let key = &self.preference.key;
-        let value = &self.preference.value;
+        let domain = &self.setting.domain;
+        let key = &self.setting.key;
+        let value = &self.setting.value;
         let current = match &self.current {
             Some(v) => format!("{v}"),
             None => "(unset)".into(),
@@ -103,35 +122,126 @@ impl fmt::Display for Change {
     }
 }
 
-/// Calculate changes needed to reconcile a system
-pub fn diff(config: &Config) -> Result<Vec<Change>> {
+impl IntegrationChange for Change {
+    fn section(&self) -> String {
+        section(&self.setting.domain)
+    }
+
+    fn key(&self) -> &str {
+        &self.setting.key
+    }
+
+    fn current(&self) -> DisplayValue {
+        self.current
+            .as_ref()
+            .map(DisplayValue::from)
+            .unwrap_or(DisplayValue::Missing)
+    }
+
+    fn desired(&self) -> DisplayValue {
+        DisplayValue::from(&self.setting.value)
+    }
+
+    fn is_applied(&self) -> bool {
+        self.current.as_ref() == Some(&self.setting.value)
+    }
+
+    fn operation_hint(&self) -> Result<String> {
+        write_command(&self.setting)
+    }
+
+    fn relaunches(&self) -> &'static [&'static str] {
+        match self.setting.domain.as_str() {
+            "com.apple.dock" => &["Dock"],
+            "com.apple.finder" => &["Finder"],
+            _ => &[],
+        }
+    }
+
+    /// Apply a given change by forking the `defaults` command
+    fn apply(&self) -> Result<()> {
+        let setting = &self.setting;
+
+        validate_domain(&setting.domain)?;
+
+        let status = Command::new(DEFAULTS_CMD)
+            .args([
+                "write",
+                &setting.domain,
+                &setting.key,
+                setting.value.defaults_type(),
+                &setting.value.argument(),
+            ])
+            .status()
+            .context("could not run defaults")?;
+
+        if !status.success() {
+            bail!(
+                "defaults failed while writing {}.{}",
+                setting.domain,
+                setting.key
+            );
+        }
+
+        Ok(())
+    }
+}
+
+/// Parse the config value below the top-level `defaults` key.
+pub fn parse(value: &toml::Value) -> Result<Vec<Setting>> {
+    let domains = value
+        .as_table()
+        .context("the defaults namespace must contain domain tables")?;
+
+    let mut settings = Vec::new();
+    for (domain, contents) in domains {
+        validate_domain(domain)?;
+        let table = contents.as_table().with_context(|| {
+            format!(
+                "domain {domain:?} must be a table - quote dotted domain \
+                 names, for example [defaults.\"com.apple.dock\"]"
+            )
+        })?;
+
+        for (key, value) in table {
+            let value = Value::from_toml(value).with_context(|| {
+                format!("defaults.{domain}.{key} unsupported type")
+            })?;
+            settings.push(Setting {
+                domain: domain.clone(),
+                key: key.clone(),
+                value,
+            });
+        }
+    }
+
+    Ok(settings)
+}
+
+/// Read current state and build an owned reconciliation plan.
+pub fn plan(settings: &[Setting]) -> Result<Vec<Change>> {
     let mut changes = Vec::new();
     let mut domains = HashMap::new();
 
-    // loop over every preference found in the config
-    for preference in &config.preferences {
+    for setting in settings {
         // check if we have already looked at this domain - if not, look it
         // up and cache it
-        if !domains.contains_key(&preference.domain) {
-            let domain = export(&preference.domain)?;
-            domains.insert(preference.domain.clone(), domain);
+        if !domains.contains_key(&setting.domain) {
+            let domain = export(&setting.domain)?;
+            domains.insert(setting.domain.clone(), domain);
         }
 
-        let current = domains[&preference.domain]
-            .get(&preference.key)
+        let current = domains[&setting.domain]
+            .get(&setting.key)
             .and_then(value_from_plist);
-
-        // only store the change if what the config has differs from what
-        // the system has
-        if current.as_ref() != Some(&preference.value) {
-            changes.push(Change { preference: preference.clone(), current });
-        }
+        changes.push(Change { setting: setting.clone(), current });
     }
+
     Ok(changes)
 }
 
 /// Export an entire domain
-pub fn export(domain: &str) -> Result<Dictionary> {
+fn export(domain: &str) -> Result<Dictionary> {
     validate_domain(domain)?;
 
     let output = Command::new(DEFAULTS_CMD)
@@ -164,50 +274,36 @@ pub fn export(domain: &str) -> Result<Dictionary> {
     })
 }
 
-/// Apply a given change by forking the `defaults` command
-pub fn apply(change: &Change) -> Result<()> {
-    let preference = &change.preference;
-
-    validate_domain(&preference.domain)?;
-
-    let status = Command::new(DEFAULTS_CMD)
-        .args([
-            "write",
-            &preference.domain,
-            &preference.key,
-            preference.value.defaults_type(),
-            &preference.value.argument(),
-        ])
-        .status()
-        .context("could not run defaults")?;
-
-    if !status.success() {
-        bail!(
-            "defaults failed while writing {}.{}",
-            preference.domain,
-            preference.key
-        );
-    }
-
-    Ok(())
-}
-
 /// Write the command needed to enforce a preference safely for the shell
-pub fn write_command(preference: &Preference) -> Result<String> {
-    validate_domain(&preference.domain)?;
+fn write_command(setting: &Setting) -> Result<String> {
+    validate_domain(&setting.domain)?;
     let s = format!(
         "{} write {} {} {} {}",
         DEFAULTS_CMD,
-        shell::quote(&preference.domain),
-        shell::quote(&preference.key),
-        preference.value.defaults_type(),
-        shell::quote(&preference.value.argument())
+        shell::quote(&setting.domain),
+        shell::quote(&setting.key),
+        setting.value.defaults_type(),
+        shell::quote(&setting.value.argument())
     );
     Ok(s)
 }
 
+/// Convert the defaults domain to a printable section name
+fn section(domain: &str) -> String {
+    let bare = domain.bytes().all(|byte| {
+        byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-')
+    });
+
+    if bare {
+        format!("defaults.{domain}")
+    } else {
+        let quoted = toml::Value::String(domain.to_owned());
+        format!("defaults.{quoted}")
+    }
+}
+
 /// Convert a plist value to an internal value type
-pub fn value_from_plist(value: &plist::Value) -> Option<Value> {
+fn value_from_plist(value: &plist::Value) -> Option<Value> {
     match value {
         plist::Value::Boolean(value) => Some(Value::Boolean(*value)),
         plist::Value::Integer(value) => value.as_signed().map(Value::Integer),
@@ -230,7 +326,7 @@ pub fn value_from_plist(value: &plist::Value) -> Option<Value> {
  *
  * so to avoid any potential file manipulation we do some basic validation.
  */
-pub fn validate_domain(domain: &str) -> Result<()> {
+fn validate_domain(domain: &str) -> Result<()> {
     if domain.is_empty() {
         bail!("preference domain may not be empty");
     }

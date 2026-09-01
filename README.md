@@ -36,6 +36,9 @@ autohide = true
 [defaults."com.apple.finder"]
 ShowStatusBar = true
 
+[wallpaper]
+path = "~/Pictures/wallpaper.jpg"
+
 # ... and more ...
 ```
 
@@ -147,6 +150,47 @@ Examples:
   prefset apply --dry-run     See what changes would be made
   prefset apply               Actually set your preferences
 ```
+
+Development
+-----------
+
+### Integrations
+
+Every top-level section in the config has a corresponding module in
+[`src/integrations/`](src/integrations/). For example:
+
+- `[defaults.*]` is handled by `defaults.rs`.
+- `[wallpaper]` is handled by `wallpaper.rs`.
+- etc.
+
+An integration owns everything specific to its section:
+
+- the parsed `Setting` type.
+- parsing and validation below its top-level key.
+- reading the current state and planning changes.
+- deciding whether a change is already applied.
+- mapping its state into shared display values.
+- describing the operation and any processes it affects.
+- applying its change.
+
+`src/config.rs` only recognizes top-level keys and dispatches their values to
+the appropriate integration parser.  Adding an integration requires adding its
+module, registering its key in `Config`, and adding its change type to
+`PlannedChange`.
+
+### Planning changes
+
+Parsing first produces integration-specific settings. Before `check` or
+`apply` does anything, each integration reads the current system state and the
+settings are converted into a single `Vec<PlannedChange>`.
+
+The complete plan is built before any system state is changed.  This means
+planning fail fast and gives a useful error to the user before anything is
+modified.
+
+Note: This program is not transactional - if planning is successful but then
+applying the change fails - this program does not roll back earlier successful
+operations.
 
 License
 -------

@@ -10,6 +10,9 @@
  * - Dave Eddy <ysap@daveeddy.com>
  */
 
+#[cfg(not(target_os = "macos"))]
+compile_error!("prefset only supports macOS");
+
 use std::ffi::OsStr;
 use std::io::IsTerminal;
 use std::path::PathBuf;
@@ -22,6 +25,7 @@ use crate::args::Command;
 mod args;
 mod commands;
 mod config;
+mod integrations;
 mod util;
 
 // CLI app config / state
@@ -31,11 +35,6 @@ pub struct State {
 }
 
 fn main() -> Result<()> {
-    // before doing anything print a warning of the target OS is not mac
-    if !cfg!(target_os = "macos") {
-        eprintln!("warning: target os is not macos, found {}", env::consts::OS);
-    }
-
     // parse args and store some process state
     let cli = args::parse();
     let state = State {

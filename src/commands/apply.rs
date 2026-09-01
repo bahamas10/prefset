@@ -2,7 +2,7 @@
  * `prefset apply` subcommand
  */
 
-use std::collections::HashSet;
+use std::collections::BTreeSet;
 use std::io;
 use std::io::IsTerminal;
 use std::io::Write;
@@ -13,134 +13,91 @@ use indoc::formatdoc;
 
 use crate::State;
 use crate::args::ApplyCommand;
-use crate::config::{Config, Preference};
+use crate::config::Config;
+use crate::integrations::{
+    self, DisplayValue, IntegrationChange, PlannedChange,
+};
 use crate::util::color::colorize;
-use crate::util::defaults::{self, Change};
 
 const INDENT: &str = "    ";
 
 /// `prefset apply ...`
 pub fn run(state: &State, cmd: &ApplyCommand) -> Result<()> {
-    let config = Config::load(&state.config_path)?;
-
     let color = state.color_enabled;
 
-    let mut index = 0;
+    // parse the config and come up with a plan
+    let config = Config::load(&state.config_path)?;
+    let plan = integrations::plan(&config)?;
+
     let mut changed = 0;
-    let mut first_domain = true;
-    let mut to_relaunch = HashSet::new();
-    let total = config.preferences.len();
+    let mut to_relaunch = BTreeSet::new();
+    let mut previous_section = None;
+    let total = plan.len();
 
-    // loop every preference
-    while index < total {
-        if !first_domain {
-            println!();
-        }
-        first_domain = false;
+    for change in &plan {
+        let section = change.section();
 
-        // print the domain
-        let domain = &config.preferences[index].domain;
-        let header = domain_header(domain);
-        println!("[{}]", colorize(&header, 36, color));
-
-        // export the full domain
-        let values = defaults::export(domain)?;
-
-        // loop every preference while they are in the same domain - todo is
-        // there a cleaner way to do this?
-        while index < total && config.preferences[index].domain == *domain {
-            let preference = &config.preferences[index];
-
-            // get the "current" setting from the system (may be None)
-            let current = values
-                .get(&preference.key)
-                .and_then(defaults::value_from_plist);
-
-            // check if the preference is already in sync
-            let already_synced = current.as_ref() == Some(&preference.value);
-            let change = Change { preference: preference.clone(), current };
-
-            /*
-             * The program can be running in multiple different modes here:
-             * - (default): apply the changes for settings not already in sync
-             * - --force: apply the changes regardless of sync status
-             * - --dry-run: ^ do what is above but don't actually execute it
-             * - --verbose: ^ do above but print before running
-             */
-            let mut should_apply = false;
-            if cmd.force {
-                print_rewritten(preference, color);
-                should_apply = true;
-            } else if !already_synced {
-                print_changed(&change, color);
-                should_apply = true;
-            } else {
-                print_unchanged(preference, color);
+        // print the section "header" if it's a new section
+        if previous_section.as_ref() != Some(&section) {
+            if previous_section.is_some() {
+                println!();
             }
-
-            // commit the change if needed
-            if should_apply {
-                changed += 1;
-
-                // keep track of services that will need to be relauched
-                match domain.as_str() {
-                    "com.apple.dock" => {
-                        to_relaunch.insert("Dock");
-                    }
-                    "com.apple.finder" => {
-                        to_relaunch.insert("Finder");
-                    }
-                    _ => {}
-                };
-
-                if cmd.verbose {
-                    let s = defaults::write_command(preference)?;
-                    print_command(&s, color, cmd.dry_run);
-                }
-
-                // actually apply the setting
-                if !cmd.dry_run {
-                    // todo: change.apply() instead? make it a method of the
-                    // struct?
-                    defaults::apply(&change)?;
-                }
-            }
-
-            index += 1;
+            println!("[{}]", colorize(&section, 36, color));
+            previous_section = Some(section);
         }
+
+        let is_applied = change.is_applied();
+        let should_apply = cmd.force || !is_applied;
+
+        // print a message
+        if cmd.force {
+            print_rewritten(change, color);
+        } else if is_applied {
+            print_unchanged(change, color);
+        } else {
+            print_changed(change, color);
+        }
+
+        if !should_apply {
+            continue;
+        }
+
+        // keep track of what to relaunch (if any)
+        for process in change.relaunches() {
+            to_relaunch.insert(*process);
+        }
+
+        if cmd.verbose {
+            print_operation(&change.operation_hint()?, color, cmd.dry_run);
+        }
+
+        if !cmd.dry_run {
+            // make the change
+            change.apply()?;
+        }
+
+        changed += 1;
     }
 
-    // preferences updated - print summary
     println!();
-    print!("- updated {}/{} preferences", changed, total);
+    print!("- updated {changed}/{total} preferences");
     if cmd.dry_run {
         print!(" (dry-run, nothing done)");
     }
     println!();
 
-    // figure out if we need to relaunch any services
     if !to_relaunch.is_empty() {
         let to_relaunch: Vec<_> = to_relaunch.into_iter().collect();
         handle_relaunch(state, cmd, &to_relaunch)?;
         println!();
     }
 
-    // done!
     let check = colorize("✓", 32, color);
     println!("{check} done");
 
     Ok(())
 }
 
-/**
- * Handle optionally relaunching processes affected by the preferences modified
- * based on the CLI flags given:
- *
- * - (default): io is a TTY: prompt the user yes or no
- * - (default): io is not a TTY: don't relaunch anything
- * - --relaunch: relaunch the services without prompting
- * - --no-relaunch: don't relaunch anything
- */
 fn handle_relaunch(
     state: &State,
     cmd: &ApplyCommand,
@@ -153,11 +110,10 @@ fn handle_relaunch(
     let count = colorize(&to_relaunch.len().to_string(), 35, color);
 
     println!();
-    println!("{}", header);
+    println!("{header}");
     println!();
-    println!("{} process(es) need to relaunch: {}", count, names);
+    println!("{count} process(es) need to relaunch: {names}");
 
-    // stop here if the user says --no-relaunch
     if cmd.no_relaunch {
         println!(
             "skipping relaunch - `{}` given",
@@ -166,14 +122,12 @@ fn handle_relaunch(
         return Ok(());
     }
 
-    // stop here if not a TTY and the user didn't explicitly ask for relaunching
     let isatty = io::stdin().is_terminal() && io::stdout().is_terminal();
     if !isatty && !cmd.relaunch {
         println!("skipping relaunch - input/output is not a TTY");
         return Ok(());
     }
 
-    // prompt the user to confirm if `--relaunch` is not found
     if !cmd.relaunch {
         let relaunch_cmd = colorize(&relaunch_command(to_relaunch), 2, color);
 
@@ -209,106 +163,70 @@ fn handle_relaunch(
         }
     }
 
-    // if we are here then it's time to relaunch!
     if cmd.verbose {
-        let s = relaunch_command(to_relaunch);
-        print_command(&s, color, cmd.dry_run);
+        print_operation(&relaunch_command(to_relaunch), color, cmd.dry_run);
     }
+
     if !cmd.dry_run {
         let status = Command::new("/usr/bin/killall")
             .args(to_relaunch)
             .status()
-            .with_context(|| format!("could not relaunch {}", names))?;
+            .with_context(|| format!("could not relaunch {names}"))?;
         if !status.success() {
-            bail!("could not relaunch {}", names);
+            bail!("could not relaunch {names}");
         }
 
-        println!("relaunched {}", names);
+        println!("relaunched {names}");
     }
 
     Ok(())
 }
 
-/// Return the stringified version of the "killall" command
 fn relaunch_command(processes: &[&str]) -> String {
-    let mut args = vec!["/usr/bin/killall".to_string()];
-    for proc in processes {
-        args.push(crate::util::shell::quote(proc));
+    let mut args = vec!["/usr/bin/killall".to_owned()];
+    for process in processes {
+        args.push(crate::util::shell::quote(process));
     }
-
     args.join(" ")
 }
 
-/// Format the domain header (safely quote it)
-fn domain_header(domain: &str) -> String {
-    // figure out if we need to quote the header
-    let bare = domain.bytes().all(|byte| {
-        byte.is_ascii_alphanumeric() || matches!(byte, b'_' | b'-')
-    });
-
-    if bare {
-        format!("defaults.{}", domain)
+fn print_operation(operation: &str, color: bool, dry_run: bool) {
+    let operation = colorize(operation, 2, color);
+    let state = if dry_run {
+        colorize("[SKIPPED]", 2, color)
     } else {
-        let quoted = toml::Value::String(domain.to_owned());
-        format!("defaults.{}", quoted)
-    }
-}
-
-/// Print a command to the screen
-fn print_command(command: &str, color: bool, dry_run: bool) {
-    let cmd = colorize(command, 2, color);
-
-    let state = match dry_run {
-        true => colorize("[SKIPPED]", 2, color),
-        false => colorize("[RUN]", 2, color),
+        colorize("[RUN]", 2, color)
     };
 
-    println!("{INDENT}{INDENT}{} {}\n", state, cmd);
+    println!("{INDENT}{INDENT}{state} {operation}\n");
 }
 
-/// Print a message when a preference is *not* updated
-fn print_unchanged(preference: &Preference, color: bool) {
+fn print_unchanged(change: &PlannedChange, color: bool) {
     let check = colorize("✓", 32, color);
-    let key = &preference.key;
-    let value = &preference.value;
-
-    let msg = format!("{} = {}", key, value);
-    let msg = colorize(&msg, 2, color);
-
-    println!("{INDENT}{check} {}", msg);
+    let property = format!("{} = {}", change.key(), change.desired());
+    let property = colorize(&property, 2, color);
+    println!("{INDENT}{check} {property}");
 }
 
-/// Print a message when a preference is updated
-fn print_changed(change: &Change, color: bool) {
+fn print_changed(change: &PlannedChange, color: bool) {
     let arrow = colorize("→", 33, color);
-    let key = &change.preference.key;
-
-    let current = change
-        .current
-        .as_ref()
-        .map(|value| styled_value(value, color))
-        .unwrap_or_else(|| colorize("<unset>", 2, color));
-
-    let desired = styled_value(&change.preference.value, color);
-
-    println!("{INDENT}{arrow} {}: {} -> {}", key, current, desired);
+    let current = styled_value(&change.current(), color);
+    let desired = styled_value(&change.desired(), color);
+    println!("{INDENT}{arrow} {}: {current} -> {desired}", change.key());
 }
 
-/// Print a message when a preference is forced rewritten
-fn print_rewritten(preference: &Preference, color: bool) {
+fn print_rewritten(change: &PlannedChange, color: bool) {
     let rewrite = colorize("o", 35, color);
-    let key = &preference.key;
-    let value = styled_value(&preference.value, color);
-
-    println!("{INDENT}{rewrite} {} = {}", key, value);
+    let value = styled_value(&change.desired(), color);
+    println!("{INDENT}{rewrite} {} = {value}", change.key());
 }
 
-/// Colorize values consistently
-fn styled_value(value: &defaults::Value, color: bool) -> String {
+fn styled_value(value: &DisplayValue, color: bool) -> String {
     let ansi_color = match value {
-        defaults::Value::Boolean(_) => 35,
-        defaults::Value::Integer(_) | defaults::Value::Float(_) => 36,
-        defaults::Value::String(_) => 32,
+        DisplayValue::Boolean(_) => 35,
+        DisplayValue::Integer(_) | DisplayValue::Float(_) => 36,
+        DisplayValue::String(_) => 32,
+        DisplayValue::Missing | DisplayValue::Description(_) => 2,
     };
     colorize(&value.to_string(), ansi_color, color)
 }

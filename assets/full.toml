@@ -216,3 +216,12 @@
 # New tabs use the default profile and current working directory.
 # NewTabSettingsBehavior = 1
 # NewTabWorkingDirectoryBehavior = 1
+
+[wallpaper]
+# set a wallapaper on every attached screen
+
+# use one of the system wallpapers
+# path = "/System/Library/Desktop Pictures/Mac Blue.heic"
+
+# use one of your own, `~` is resolved by this integration
+# path = "~/Pictures/wallpaper.jpg"
