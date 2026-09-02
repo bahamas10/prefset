@@ -37,6 +37,9 @@ NSAutomaticDashSubstitutionEnabled = false
 # Trackpad: enable tap to click.
 "com.apple.mouse.tapBehavior" = 1
 
+# mouse
+AppleShowScrollBars = "Automatic"
+
 [defaults."com.apple.driver.AppleBluetoothMultitouch.trackpad"]
 # enable tap to click - i'm not positive why i have this in 2 different settings
 # tbh

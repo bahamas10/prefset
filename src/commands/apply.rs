@@ -179,6 +179,10 @@ fn handle_relaunch(
         println!("relaunched {names}");
     }
 
+    println!();
+    println!("> note that some changes may not take affect until the user");
+    println!("> logs out and logs back in.");
+
     Ok(())
 }
 
