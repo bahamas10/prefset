@@ -10,6 +10,10 @@
 #
 # - Dave Eddy, @yousuckatprogramming
 
+# i like dark mode
+[appearance]
+mode = "dark"
+
 [defaults.NSGlobalDomain]
 # Keyboard
 NSAutomaticSpellingCorrectionEnabled = false

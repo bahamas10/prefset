@@ -9,11 +9,12 @@ use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 
-use crate::integrations::{defaults, wallpaper};
+use crate::integrations::{appearance, defaults, wallpaper};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Config {
     pub defaults: Vec<defaults::Setting>,
+    pub appearance: Option<appearance::Setting>,
     pub wallpaper: Option<wallpaper::Setting>,
 }
 
@@ -34,10 +35,14 @@ impl Config {
             toml::from_str(source).context("invalid TOML")?;
 
         let mut defaults_settings = Vec::new();
+        let mut appearance_setting = None;
         let mut wallpaper_setting = None;
 
         for (key, value) in document {
             match key.as_str() {
+                "appearance" => {
+                    appearance_setting = Some(appearance::parse(&value)?);
+                }
                 "defaults" => {
                     defaults_settings = defaults::parse(&value)?;
                 }
@@ -48,6 +53,10 @@ impl Config {
             }
         }
 
-        Ok(Self { defaults: defaults_settings, wallpaper: wallpaper_setting })
+        Ok(Self {
+            defaults: defaults_settings,
+            appearance: appearance_setting,
+            wallpaper: wallpaper_setting,
+        })
     }
 }

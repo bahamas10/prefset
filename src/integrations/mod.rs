@@ -9,6 +9,7 @@ use enum_dispatch::enum_dispatch;
 
 use crate::config::Config;
 
+pub mod appearance;
 pub mod defaults;
 pub mod wallpaper;
 
@@ -53,6 +54,7 @@ pub trait IntegrationChange {
 #[enum_dispatch(IntegrationChange)]
 #[derive(Clone, Debug)]
 pub enum PlannedChange {
+    Appearance(appearance::Change),
     Defaults(defaults::Change),
     Wallpaper(wallpaper::Change),
 }
@@ -63,6 +65,10 @@ pub fn plan(config: &Config) -> Result<Vec<PlannedChange>> {
         .into_iter()
         .map(PlannedChange::from)
         .collect();
+
+    if let Some(setting) = &config.appearance {
+        plan.push(appearance::plan(setting)?.into());
+    }
 
     if let Some(setting) = &config.wallpaper {
         plan.push(wallpaper::plan(setting)?.into());

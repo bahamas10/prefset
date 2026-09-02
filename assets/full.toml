@@ -3,6 +3,11 @@
 # Preferences live under the `defaults` namespace. Each nested table is a
 # macOS preferences domain.
 
+# Set the system appearance to "light" or "dark". The first time prefset checks
+# or applies this setting, macOS may ask you to allow it to control System Events.
+# [appearance]
+# mode = "dark"
+
 [defaults.NSGlobalDomain]
 # Disable automatic spelling corrections and sentence capitalization.
 # NSAutomaticSpellingCorrectionEnabled = false
