@@ -14,6 +14,8 @@ KeyRepeat = 2
 [defaults."com.apple.dock"]
 orientation = "left"
 autohide = true
+tilesize = 40
+show-recents = false
 
 [defaults."com.apple.finder"]
 ShowStatusBar = true
