@@ -14,6 +14,10 @@
 [appearance]
 mode = "dark"
 
+[filesystem]
+# unhide the library in my home dir
+"~/Library" = { hidden = false }
+
 [defaults.NSGlobalDomain]
 # Keyboard
 NSAutomaticSpellingCorrectionEnabled = false

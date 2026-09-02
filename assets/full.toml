@@ -8,6 +8,12 @@
 # [appearance]
 # mode = "dark"
 
+# Manage the macOS hidden flag on a file or directory. A leading `~` is
+# expanded to the current user's home directory.
+[filesystem]
+# Unhide the library directory
+# "~/Library" = { hidden = false }
+
 [defaults.NSGlobalDomain]
 # Disable automatic spelling corrections and sentence capitalization.
 # NSAutomaticSpellingCorrectionEnabled = false

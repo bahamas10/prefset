@@ -2,7 +2,6 @@
  * Manage desktop wallpaper through macOS AppKit.
  */
 
-use std::env;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
@@ -13,7 +12,7 @@ use objc2_app_kit::{NSScreen, NSWorkspace, NSWorkspaceDesktopImageOptionKey};
 use objc2_foundation::{NSDictionary, NSString, NSURL};
 
 use super::{DisplayValue, IntegrationChange};
-use crate::util::path::friendly_path;
+use crate::util::path::{expand_home, friendly_path};
 
 /// The configuration below the top-level `wallpaper` key.
 #[derive(Clone, Debug, PartialEq)]
@@ -165,21 +164,6 @@ fn resolve(configured: &Path) -> Result<PathBuf> {
     }
 
     Ok(path)
-}
-
-/// Expand `~` in a path.
-fn expand_home(path: &Path) -> Result<PathBuf> {
-    let mut components = path.components();
-    let Some(first) = components.next() else {
-        bail!("wallpaper path may not be empty");
-    };
-
-    if first.as_os_str() != "~" {
-        return Ok(path.to_owned());
-    }
-
-    let home = env::home_dir().context("could not find home directory")?;
-    Ok(components.fold(home, |path, component| path.join(component)))
 }
 
 /// List all screens currently connected

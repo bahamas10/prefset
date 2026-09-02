@@ -11,6 +11,7 @@ use crate::config::Config;
 
 pub mod appearance;
 pub mod defaults;
+pub mod filesystem;
 pub mod wallpaper;
 
 /// An integration-neutral value prepared for command-line presentation.
@@ -56,19 +57,27 @@ pub trait IntegrationChange {
 pub enum PlannedChange {
     Appearance(appearance::Change),
     Defaults(defaults::Change),
+    Filesystem(filesystem::Change),
     Wallpaper(wallpaper::Change),
 }
 
 /// Build the complete plan before applying any changes.
 pub fn plan(config: &Config) -> Result<Vec<PlannedChange>> {
-    let mut plan: Vec<_> = defaults::plan(&config.defaults)?
-        .into_iter()
-        .map(PlannedChange::from)
-        .collect();
+    let mut plan = vec![];
 
     if let Some(setting) = &config.appearance {
         plan.push(appearance::plan(setting)?.into());
     }
+
+    plan.extend(
+        defaults::plan(&config.defaults)?.into_iter().map(PlannedChange::from),
+    );
+
+    plan.extend(
+        filesystem::plan(&config.filesystem)?
+            .into_iter()
+            .map(PlannedChange::from),
+    );
 
     if let Some(setting) = &config.wallpaper {
         plan.push(wallpaper::plan(setting)?.into());

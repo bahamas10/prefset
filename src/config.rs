@@ -9,12 +9,13 @@ use std::path::Path;
 
 use anyhow::{Context, Result, bail};
 
-use crate::integrations::{appearance, defaults, wallpaper};
+use crate::integrations::{appearance, defaults, filesystem, wallpaper};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Config {
     pub defaults: Vec<defaults::Setting>,
     pub appearance: Option<appearance::Setting>,
+    pub filesystem: Vec<filesystem::Setting>,
     pub wallpaper: Option<wallpaper::Setting>,
 }
 
@@ -36,6 +37,7 @@ impl Config {
 
         let mut defaults_settings = Vec::new();
         let mut appearance_setting = None;
+        let mut filesystem_settings = Vec::new();
         let mut wallpaper_setting = None;
 
         for (key, value) in document {
@@ -45,6 +47,9 @@ impl Config {
                 }
                 "defaults" => {
                     defaults_settings = defaults::parse(&value)?;
+                }
+                "filesystem" => {
+                    filesystem_settings = filesystem::parse(&value)?;
                 }
                 "wallpaper" => {
                     wallpaper_setting = Some(wallpaper::parse(&value)?);
@@ -56,6 +61,7 @@ impl Config {
         Ok(Self {
             defaults: defaults_settings,
             appearance: appearance_setting,
+            filesystem: filesystem_settings,
             wallpaper: wallpaper_setting,
         })
     }
