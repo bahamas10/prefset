@@ -112,6 +112,7 @@ mru-spaces = false
 autohide = true
 orientation = "left"
 show-recents = false
+tilesize = 40
 
 # Hot-corner values:
 # 0: no-op; 2: Mission Control; 3: application windows; 4: Desktop;

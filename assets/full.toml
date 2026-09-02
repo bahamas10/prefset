@@ -155,6 +155,7 @@
 # show-recents = false
 
 # Size Dock icons and optionally magnify them on hover.
+# tilesize is usually 30 >= tilesize <= 128
 # tilesize = 48.0
 # magnification = false
 # largesize = 64.0
