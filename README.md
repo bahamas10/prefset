@@ -154,6 +154,19 @@ Examples:
 Development
 -----------
 
+Ensure that code is clean before submitting PRs with:
+
+    cargo fmt
+    cargo build
+    cargo test
+
+PRs are welcome, but please keep them as small as they possibly can be.  Don't
+push giant PRs like "many changes lol", i'd rather multiple small PRs than one
+giant one.
+
+Program Design
+--------------
+
 ### Integrations
 
 Every top-level section in the config has a corresponding module in
