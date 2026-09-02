@@ -88,6 +88,10 @@
 # TrackpadThreeFingerDrag = true
 
 [defaults."com.apple.universalaccess"]
+# XXX: This will probably fail if you uncomment this.  It's super weird, but if
+# you try to use this and it fails you need to enable "Full Disk Access" for the
+# terminal emulator that you are using to run this command.  Idk why.
+
 # Use Ctrl + scroll to zoom and follow keyboard focus while zoomed.
 # closeViewScrollWheelToggle = true
 # 262144 is the modifier-mask value for the Control key.

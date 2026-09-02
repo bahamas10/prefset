@@ -70,9 +70,13 @@ TrackpadThreeFingerDrag = true
 
 [defaults."com.apple.universalaccess"]
 # ctrl + scroll to zoom and follow keyboard focus while zoomed.
-closeViewScrollWheelToggle = true
-HIDScrollZoomModifierMask = 262144
-closeViewZoomFollowsFocus = true
+# XXX: i commented this out (even though i use it) because macOS will complain
+# that it can't write to them.  it's so stupid. you need to enable "full disk
+# access" for your whole terminal for it to work.  it's lame - i'll just do it
+# manually to reduce friction.
+#closeViewScrollWheelToggle = true
+#HIDScrollZoomModifierMask = 262144
+#closeViewZoomFollowsFocus = true
 
 [defaults."com.apple.print.PrintingPrefs"]
 # dave has to check if this still does anything lol
